@@ -1,18 +1,66 @@
 from selenium.webdriver.common.by import By
-
+from utils.test_utils import *
 
 class GoogleAfterSearch:
-    python_link_locator = (By.XPATH, "//a[contains(@href, 'wikipedia')]//h3[text() = 'Python']")
+    """Класс представляет собой Page Object страницы результатов поиска Google.
 
-    # (//a//h3)[1]
+        Назначение:
+            Обеспечивает действия и проверки на странице с результатами поиска:
+            открытие нужной ссылки из выдачи и проверку наличия ссылок на указанный сайт.
+
+        Автор: Сергей Лужин
+        """
 
     def __init__(self, webdriver):
+        """Инициализирует объект страницы результатов поиска Google.
+
+                Назначение:
+                    Сохраняет экземпляр WebDriver для дальнейшего взаимодействия
+                    с открытым браузером и элементами страницы результатов поиска.
+
+                Параметры:
+                    webdriver: Экземпляр Selenium WebDriver, управляющий браузером.
+
+                Автор: Сергей Лужин
+                """
         self.webdriver = webdriver
 
-    def open_link_with_number(self, link_number: int):
-        link_locator = (By.XPATH, f"(//a//h3)[{link_number}]")
-        self.webdriver.find_element(*self.python_link_locator).click()
-
     def open_link_with_site_and_title(self, site: str, title: str):
+        """Открывает ссылку из результатов поиска по адресу сайта и заголовку.
+
+                Назначение:
+                    Находит в результатах поиска ссылку, которая:
+                    - ведёт на указанный сайт (часть адреса содержится в href),
+                    - имеет указанный текст заголовка (title),
+                    и выполняет клик по этой ссылке.
+
+                Параметры:
+                    site (str): Часть адреса сайта (домен или его часть),
+                        которая должна содержаться в атрибуте href ссылки.
+                    title (str): Точный текст заголовка ссылки (текст внутри тега <h3>),
+                        по которой необходимо выполнить переход.
+
+                Автор: Сергей Лужин
+                """
         link_locator = (By.XPATH, f"//a[contains(@href, '{site}')]//h3[text() = '{title}']")
-        self.webdriver.find_element(*self.python_link_locator).click()
+        self.webdriver.find_element(*link_locator).click()
+
+    def check_title_has_needed_link(self, site: str):
+        """Проверяет наличие ссылок на указанный сайт в результатах поиска.
+
+                Назначение:
+                    Ищет на странице результаты, содержащие текст с указанием нужного сайта,
+                    делает скриншот для Allure-отчёта и проверяет, что найден хотя бы один
+                    такой элемент. В случае отсутствия ссылок на сайт — тест падает с
+                    сообщением об ошибке.
+
+                Параметры:
+                    site (str): Часть названия сайта, по которой определяется, что результат
+                        относится к нужному сайту.
+
+                Автор: Сергей Лужин
+                """
+        with allure.step("Проверяем, что: На странице отображаются результаты поиска. На первой странице есть ссылка на википедию"):
+            elements = self.webdriver.find_elements(By.XPATH, f"//div/span[contains(. , '{site}')]")
+            allure_screenshot(self.webdriver, "Ссылки на странице после поиска")
+            assert len(elements) > 0, f"Ссылок на '{site}' не найдено на странице"
